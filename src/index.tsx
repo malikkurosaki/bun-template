@@ -3,7 +3,7 @@ import Elysia, { t } from "elysia";
 import Swagger from "@elysiajs/swagger";
 import html from "./index.html"
 import Dashboard from "./server/routes/darmasaba";
-import apiAuth from "./server/middlewares/apiAuth";
+import { apiAuth } from "./server/middlewares/apiAuth";
 import Auth from "./server/routes/auth_route";
 import ApiKeyRoute from "./server/routes/apikey_route";
 import type { User } from "generated/prisma";
