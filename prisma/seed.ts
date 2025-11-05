@@ -3,8 +3,8 @@ import { prisma } from "@/server/lib/prisma";
 const user = [
     {
         name: "Bip",
-        email: "bip@bip.com",
-        password: "bip",
+        email: "wibu@bip.com",
+        password: "Production_123",
     }
 ];
 
