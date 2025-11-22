@@ -30,17 +30,28 @@ import { default as clientRoute, default as clientRoutes } from '@/clientRoutes'
 import apiFetch from '@/lib/apiFetch'
 
 
+/* ----------------------- Logout ----------------------- */
 function Logout() {
-    return <Group>
-        <Button variant='transparent' size='compact-xs' onClick={async () => {
-            await apiFetch.auth.logout.delete()
-            localStorage.removeItem('token')
-            window.location.href = '/login'
-        }}>Logout</Button>
-    </Group>
+    return (
+        <Group justify="flex-end">
+            <Button
+                variant="light"
+                color="red"
+                size="xs"
+                onClick={async () => {
+                    await apiFetch.auth.logout.delete()
+                    localStorage.removeItem('token')
+                    window.location.href = '/login'
+                }}
+            >
+                Logout
+            </Button>
+        </Group>
+    )
 }
 
 
+/* ----------------------- Layout ----------------------- */
 export default function DashboardLayout() {
     const [opened, setOpened] = useLocalStorage({
         key: 'nav_open',
@@ -56,9 +67,11 @@ export default function DashboardLayout() {
                 collapsed: { mobile: !opened, desktop: !opened },
             }}
         >
-            <AppShell.Navbar>
+            {/* NAVBAR */}
+            <AppShell.Navbar p="sm">
+                {/* Collapse toggle */}
                 <AppShell.Section>
-                    <Group justify="flex-end" p="xs">
+                    <Group justify="flex-end">
                         <Tooltip
                             label={opened ? 'Collapse navigation' : 'Expand navigation'}
                             withArrow
@@ -67,7 +80,6 @@ export default function DashboardLayout() {
                                 variant="light"
                                 color="gray"
                                 onClick={() => setOpened(v => !v)}
-                                aria-label="Toggle navigation"
                                 radius="xl"
                             >
                                 {opened ? <IconChevronLeft /> : <IconChevronRight />}
@@ -76,18 +88,25 @@ export default function DashboardLayout() {
                     </Group>
                 </AppShell.Section>
 
-                <AppShell.Section grow component={ScrollArea} flex={1}>
+                {/* Navigation */}
+                <AppShell.Section
+                    grow
+                    component={ScrollArea}
+                    mt="sm"
+                >
                     <NavigationDashboard />
                 </AppShell.Section>
 
+                {/* User info */}
                 <AppShell.Section>
                     <HostView />
                 </AppShell.Section>
             </AppShell.Navbar>
 
+            {/* MAIN CONTENT */}
             <AppShell.Main>
                 <Stack>
-                    <Paper withBorder shadow="md" radius="lg" p="md">
+                    <Paper withBorder radius="lg" p="md" shadow="sm">
                         <Flex align="center" gap="md">
                             {!opened && (
                                 <Tooltip label="Open navigation menu" withArrow>
@@ -95,24 +114,26 @@ export default function DashboardLayout() {
                                         variant="light"
                                         color="gray"
                                         onClick={() => setOpened(true)}
-                                        aria-label="Open navigation"
                                         radius="xl"
                                     >
                                         <IconChevronRight />
                                     </ActionIcon>
                                 </Tooltip>
                             )}
+
                             <Title order={3} fw={600}>
                                 App Dashboard
                             </Title>
                         </Flex>
                     </Paper>
+
                     <Outlet />
                 </Stack>
             </AppShell.Main>
         </AppShell>
     )
 }
+
 
 /* ----------------------- Host Info ----------------------- */
 function HostView() {
@@ -127,18 +148,20 @@ function HostView() {
     }, [])
 
     return (
-        <Card radius="lg" withBorder shadow="sm" p="md">
+        <Card radius="md" withBorder shadow="xs" p="md">
             {host ? (
-                <Stack>
+                <Stack gap="sm">
                     <Flex gap="md" align="center">
-                        <Avatar size="md" radius="xl" color="blue">
+                        <Avatar size="lg" radius="xl" color="blue">
                             {host.name?.[0]}
                         </Avatar>
+
                         <Stack gap={2}>
-                            <Text fw={600}>{host.name}</Text>
-                            <Text size="sm" c="dimmed">{host.email}</Text>
+                            <Text fw={600} size="sm">{host.name}</Text>
+                            <Text size="xs" c="dimmed">{host.email}</Text>
                         </Stack>
                     </Flex>
+
                     <Divider />
                     <Logout />
                 </Stack>
@@ -161,19 +184,20 @@ function NavigationDashboard() {
         location.pathname.startsWith(clientRoute[path])
 
     return (
-        <Stack gap="xs" p="sm">
+        <Stack gap="xs">
             <NavLink
                 active={isActive('/dashboard/landing')}
-                leftSection={<IconDashboard size={20} />}
+                leftSection={<IconDashboard size={18} />}
                 label="Dashboard Overview"
                 description="Quick summary and activity highlights"
                 onClick={() => navigate(clientRoutes['/dashboard/landing'])}
             />
+
             <NavLink
                 active={isActive('/dashboard/apikey')}
-                leftSection={<IconDashboard size={20} />}
-                label="Dashboard Overview"
-                description="Quick summary and activity highlights"
+                leftSection={<IconDashboard size={18} />}
+                label="API Keys"
+                description="Manage your API credentials"
                 onClick={() => navigate(clientRoutes['/dashboard/apikey'])}
             />
         </Stack>
