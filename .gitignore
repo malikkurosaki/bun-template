@@ -1,9 +1,6 @@
 # dependencies (bun install)
 node_modules
 
-# generated
-generated
-
 # output
 out
 dist
@@ -35,3 +32,10 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# Prisma generated client
+generated/
+
+# nextpush
+nextpush
+nextpush/
