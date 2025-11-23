@@ -1,5 +1,5 @@
 {
-  "name": "bun-react-template",
+  "name": "bun-react-template-starter",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,7 +7,9 @@
     "dev": "bun --hot src/index.tsx",
     "build": "bun build ./src/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
     "start": "NODE_ENV=production bun src/index.tsx",
-    "seed": "bun prisma/seed.ts"
+    "seed": "bun prisma/seed.ts",
+    "generate:route": "bun bin/route.generate.ts",
+    "generate:env": "bun bin/env.generate.ts"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.0",
@@ -20,18 +22,24 @@
     "@mantine/notifications": "^8.3.8",
     "@prisma/client": "^6.19.0",
     "@tabler/icons-react": "^3.35.0",
-    "@types/jwt-decode": "^3.1.0",
     "add": "^2.0.6",
     "dotenv": "^17.2.3",
     "elysia": "^1.4.16",
     "jwt-decode": "^4.0.0",
+    "lodash": "^4.17.21",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6",
     "swr": "^2.3.6"
   },
   "devDependencies": {
+    "@babel/parser": "^7.28.5",
+    "@babel/traverse": "^7.28.5",
+    "@babel/types": "^7.28.5",
+    "@types/babel__traverse": "^7.28.0",
     "@types/bun": "latest",
+    "@types/jwt-decode": "^3.1.0",
+    "@types/lodash": "^4.17.21",
     "@types/react": "^19.2.6",
     "@types/react-dom": "^19.2.3",
     "postcss": "^8.5.6",
