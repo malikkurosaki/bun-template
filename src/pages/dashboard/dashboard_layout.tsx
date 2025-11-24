@@ -31,6 +31,7 @@ import {
   default as clientRoutes,
 } from "@/clientRoutes";
 import apiFetch from "@/lib/apiFetch";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 /* ----------------------- Logout ----------------------- */
 function Logout() {
@@ -59,23 +60,6 @@ export default function DashboardLayout() {
     defaultValue: true,
   });
 
-   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    async function checkSession() {
-      try {
-        // backend otomatis baca cookie JWT dari request
-        const res = await apiFetch.api.user.find.get();
-        setIsAuthenticated(res.status === 200);
-      } catch {
-        setIsAuthenticated(false);
-      }
-    }
-    checkSession();
-  }, []);
-
-  if (isAuthenticated === null) return null;
-  if (!isAuthenticated) return <Navigate to={clientRoutes["/login"]} replace />;
 
   return (
     <AppShell
@@ -141,8 +125,7 @@ export default function DashboardLayout() {
               </Title>
             </Flex>
           </Paper>
-
-          <Outlet />
+          <ProtectedRoute />
         </Stack>
       </AppShell.Main>
     </AppShell>
