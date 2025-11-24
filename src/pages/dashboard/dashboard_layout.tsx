@@ -24,7 +24,7 @@ import {
   IconDashboard,
 } from "@tabler/icons-react";
 import type { User } from "generated/prisma";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import {
   default as clientRoute,
@@ -58,6 +58,24 @@ export default function DashboardLayout() {
     key: "nav_open",
     defaultValue: true,
   });
+
+   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        // backend otomatis baca cookie JWT dari request
+        const res = await apiFetch.api.user.find.get();
+        setIsAuthenticated(res.status === 200);
+      } catch {
+        setIsAuthenticated(false);
+      }
+    }
+    checkSession();
+  }, []);
+
+  if (isAuthenticated === null) return null;
+  if (!isAuthenticated) return <Navigate to={clientRoutes["/login"]} replace />;
 
   return (
     <AppShell
