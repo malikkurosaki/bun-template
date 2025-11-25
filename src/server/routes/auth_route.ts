@@ -51,7 +51,7 @@ async function issueToken({
   cookie.token?.set({
     value: token,
     httpOnly: true,
-    secure: isProd, // aktifkan hanya di production (HTTPS)
+    secure: isProd,
     sameSite: 'strict',
     maxAge: NINETY_YEARS,
     path: '/',
@@ -60,6 +60,58 @@ async function issueToken({
   return token
 }
 
+/* -----------------------
+   REGISTER FUNCTION
+-------------------------*/
+async function register({
+  body,
+  cookie,
+  set,
+  jwt,
+}: {
+  body: { name: string; email: string; password: string }
+  cookie: COOKIE
+  set: SET
+  jwt: JWT
+}) {
+  try {
+    const { name, email, password } = body
+
+    // cek existing user
+    const existing = await prisma.user.findUnique({ where: { email } })
+    if (existing) {
+      set.status = 400
+      return { message: 'Email already registered' }
+    }
+
+    // create user
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password, // plaintext – bisa ditambah hash
+      },
+    })
+
+    return {
+      success: true,
+      message: "User registered successfully"
+    }
+
+  } catch (err) {
+    console.error('Error registering user:', err)
+    set.status = 500
+    return {
+      message: 'Register failed',
+      error:
+        err instanceof Error ? err.message : JSON.stringify(err ?? null),
+    }
+  }
+}
+
+/* -----------------------
+   LOGIN FUNCTION
+-------------------------*/
 async function login({
   body,
   cookie,
@@ -106,6 +158,9 @@ async function login({
   }
 }
 
+/* -----------------------
+   AUTH ROUTES
+-------------------------*/
 const Auth = new Elysia({
   prefix: '/auth',
   detail: { description: 'Auth API', summary: 'Auth API', tags: ['auth'] },
@@ -116,6 +171,32 @@ const Auth = new Elysia({
       secret,
     })
   )
+
+  /* REGISTER */
+  .post(
+    '/register',
+    async ({ jwt, body, cookie, set }) => {
+      return await register({
+        jwt: jwt as JWT,
+        body,
+        cookie: cookie as any,
+        set: set as any,
+      })
+    },
+    {
+      body: t.Object({
+        name: t.String(),
+        email: t.String(),
+        password: t.String(),
+      }),
+      detail: {
+        description: 'Register new account',
+        summary: 'register',
+      },
+    }
+  )
+
+  /* LOGIN */
   .post(
     '/login',
     async ({ jwt, body, cookie, set }) => {
@@ -132,11 +213,13 @@ const Auth = new Elysia({
         password: t.String(),
       }),
       detail: {
-        description: 'Login with phone; auto-register if not found',
+        description: 'Login with email + password',
         summary: 'login',
       },
     }
   )
+
+  /* LOGOUT */
   .delete(
     '/logout',
     ({ cookie }) => {

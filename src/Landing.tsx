@@ -330,10 +330,20 @@ export function LandingPage() {
             <div className="nav-content">
               <div className="logo">NexaFlow</div>
               <ul className="nav-links">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Contact</a></li>
-                <li><a href={clientRoutes["/dashboard"]} className="cta-nav">Get Started</a></li>
+                <li>
+                  <a href="#features">Features</a>
+                </li>
+                <li>
+                  <a href="#about">About</a>
+                </li>
+                <li>
+                  <a href="#contact">Contact</a>
+                </li>
+                <li>
+                  <a href={clientRoutes["/dashboard"]} className="cta-nav">
+                    Get Started
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
@@ -342,10 +352,17 @@ export function LandingPage() {
         <section className="hero">
           <div className="container">
             <h1>Transform Your Workflow with AI</h1>
-            <p>Powerful automation and intelligent insights to boost your productivity and streamline operations</p>
+            <p>
+              Powerful automation and intelligent insights to boost your
+              productivity and streamline operations
+            </p>
             <div className="hero-buttons">
-              <a href="#" className="btn btn-primary">Start Free Trial</a>
-              <a href="#" className="btn btn-secondary">Watch Demo</a>
+              <a href="#" className="btn btn-primary">
+                Start Free Trial
+              </a>
+              <a href="#" className="btn btn-secondary">
+                Watch Demo
+              </a>
             </div>
           </div>
         </section>
@@ -357,17 +374,26 @@ export function LandingPage() {
               <div className="feature-card">
                 <div className="feature-icon">⚡</div>
                 <h3>Lightning Fast</h3>
-                <p>Experience blazing fast performance with our optimized infrastructure and cutting-edge technology</p>
+                <p>
+                  Experience blazing fast performance with our optimized
+                  infrastructure and cutting-edge technology
+                </p>
               </div>
               <div className="feature-card">
                 <div className="feature-icon">🔒</div>
                 <h3>Secure & Reliable</h3>
-                <p>Enterprise-grade security with 99.9% uptime guarantee to keep your data safe and accessible</p>
+                <p>
+                  Enterprise-grade security with 99.9% uptime guarantee to keep
+                  your data safe and accessible
+                </p>
               </div>
               <div className="feature-card">
                 <div className="feature-icon">🎯</div>
                 <h3>Smart Analytics</h3>
-                <p>Gain actionable insights with AI-powered analytics and make data-driven decisions effortlessly</p>
+                <p>
+                  Gain actionable insights with AI-powered analytics and make
+                  data-driven decisions effortlessly
+                </p>
               </div>
             </div>
           </div>
@@ -405,7 +431,9 @@ export function LandingPage() {
               <a href="#">in</a>
               <a href="#">f</a>
             </div>
-            <p style={{marginTop: '30px', fontSize: '14px'}}>© 2025 NexaFlow. All rights reserved.</p>
+            <p style={{ marginTop: "30px", fontSize: "14px" }}>
+              © 2025 NexaFlow. All rights reserved.
+            </p>
           </div>
         </footer>
       </body>

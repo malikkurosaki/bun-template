@@ -1,16 +1,14 @@
 import {
-  AppShell,
-  Group,
-  Text,
   Button,
   Card,
-  SimpleGrid,
-  Table,
-  Stack,
-  Title,
-  Avatar,
-  Divider,
   Container,
+  Divider,
+  Group,
+  SimpleGrid,
+  Stack,
+  Table,
+  Text,
+  Title
 } from "@mantine/core";
 
 export default function Dashboard() {

@@ -1,5 +1,5 @@
 
-export type AppRoute = "/login" | "/" | "/dashboard" | "/dashboard/apikey/apikey" | "/dashboard/dashboard";
+export type AppRoute = "/login" | "/" | "/register" | "/dashboard" | "/dashboard/apikey/apikey" | "/dashboard/dashboard";
 
 export function route(path: AppRoute, params?: Record<string,string|number>) {
   if (!params) return path;

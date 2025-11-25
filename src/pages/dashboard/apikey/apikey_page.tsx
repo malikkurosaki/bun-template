@@ -1,21 +1,21 @@
+import apiFetch from "@/lib/apiFetch";
 import {
   Button,
   Card,
   Container,
+  Divider,
   Group,
+  Loader,
   Stack,
   Table,
   Text,
   TextInput,
   Title,
-  Divider,
-  Loader,
 } from "@mantine/core";
-import { useEffect, useState } from "react";
-import apiFetch from "@/lib/apiFetch";
-import { showNotification } from "@mantine/notifications";
-import useSwr from "swr";
 import { modals } from "@mantine/modals";
+import { showNotification } from "@mantine/notifications";
+import { useEffect, useState } from "react";
+import useSwr from "swr";
 
 export default function ApiKeyPage() {
   return (

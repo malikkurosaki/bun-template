@@ -24,14 +24,15 @@ import {
   IconDashboard,
 } from "@tabler/icons-react";
 import type { User } from "generated/prisma";
-import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   default as clientRoute,
   default as clientRoutes,
 } from "@/clientRoutes";
-import apiFetch from "@/lib/apiFetch";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import apiFetch from "@/lib/apiFetch";
+import { modals } from "@mantine/modals";
 
 /* ----------------------- Logout ----------------------- */
 function Logout() {
@@ -42,9 +43,19 @@ function Logout() {
         color="red"
         size="xs"
         onClick={async () => {
-          await apiFetch.auth.logout.delete();
-          localStorage.removeItem("token");
-          window.location.href = "/login";
+
+          modals.openConfirmModal({
+            title: "Confirm Logout",
+            children: "Are you sure you want to logout?",
+            labels: { confirm: "Logout", cancel: "Cancel" },
+            confirmProps: { color: "red" },
+            onCancel: () => { },
+            onConfirm: async () => {
+              await apiFetch.auth.logout.delete();
+              localStorage.removeItem("token");
+              window.location.href = "/login";
+            },
+          });
         }}
       >
         Logout

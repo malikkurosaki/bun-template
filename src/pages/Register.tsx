@@ -14,7 +14,8 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import apiFetch from "../lib/apiFetch";
 
-export default function Login() {
+export default function Register() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,14 +24,14 @@ export default function Login() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const response = await apiFetch.auth.login.post({
+      const response = await apiFetch.auth.register.post({
+        name,
         email,
         password,
       });
 
-      if (response.data?.token) {
-        localStorage.setItem("token", response.data.token);
-        window.location.href = "/dashboard";
+      if (response.data?.success) {
+        window.location.href = clientRoutes["/login"];
         return;
       }
 
@@ -47,7 +48,6 @@ export default function Login() {
   useEffect(() => {
     async function checkSession() {
       try {
-        // backend otomatis baca cookie JWT dari request
         const res = await apiFetch.api.user.find.get();
         setIsAuthenticated(res.status === 200);
       } catch {
@@ -66,8 +66,16 @@ export default function Login() {
       <Card shadow="sm" radius="md" padding="xl">
         <Stack gap="md">
           <Title order={2} ta="center">
-            Login
+            Register
           </Title>
+
+          <TextInput
+            label="Name"
+            placeholder="Your full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
 
           <TextInput
             label="Email"
@@ -87,11 +95,11 @@ export default function Login() {
 
           <Group justify="flex-end" mt="sm">
             <Button onClick={handleSubmit} loading={loading} fullWidth>
-              Login
+              Register
             </Button>
           </Group>
           <Text ta="center" size="sm">
-            Don't have an account? <a href="/register">Register</a>
+            Already have an account? <a href="/login">Login</a>
           </Text>
         </Stack>
       </Card>

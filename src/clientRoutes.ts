@@ -2,6 +2,7 @@
 const clientRoutes = {
   "/login": "/login",
   "/": "/",
+  "/register": "/register",
   "/dashboard": "/dashboard",
   "/dashboard/apikey/apikey": "/dashboard/apikey/apikey",
   "/dashboard/dashboard": "/dashboard/dashboard",

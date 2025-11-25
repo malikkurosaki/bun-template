@@ -59,6 +59,11 @@ const Home = {
   preload: () => import("./pages/Home"),
 };
 
+const Register = {
+  Component: React.lazy(() => import("./pages/Register")),
+  preload: () => import("./pages/Register"),
+};
+
 const ApikeyPage = {
   Component: React.lazy(() => import("./pages/dashboard/apikey/apikey_page")),
   preload: () => import("./pages/dashboard/apikey/apikey_page"),
@@ -97,6 +102,15 @@ export default function AppRoutes() {
           element={
             <React.Suspense fallback={<SkeletonLoading />}>
               <Home.Component />
+            </React.Suspense>
+          }
+        />
+
+        <Route
+          path="/register"
+          element={
+            <React.Suspense fallback={<SkeletonLoading />}>
+              <Register.Component />
             </React.Suspense>
           }
         />
