@@ -60,7 +60,6 @@ export default function DashboardLayout() {
     defaultValue: true,
   });
 
-
   return (
     <AppShell
       padding="md"

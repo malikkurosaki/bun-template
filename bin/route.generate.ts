@@ -12,54 +12,115 @@ import { basename, extname, join, relative } from "path";
 const PAGES_DIR = join(process.cwd(), "src/pages");
 const OUTPUT_FILE = join(process.cwd(), "src/AppRoutes.tsx");
 
+/******************************
+ * Prefetch Helper Template
+ ******************************/
+const PREFETCH_HELPER = `
 /**
- * ✅ Ubah nama file menjadi PascalCase
- * - Support: snake_case, kebab-case, camelCase, PascalCase
+ * Prefetch lazy component:
+ * - Hover
+ * - Visible (viewport)
+ * - Browser idle
  */
-const toComponentName = (fileName: string): string => {
-  return fileName
-    .replace(/\.[^/.]+$/, "") // hilangkan ekstensi file
-    .replace(/[_-]+/g, " ")   // snake_case & kebab-case → spasi
-    .replace(/([a-z])([A-Z])/g, "$1 $2") // camelCase → spasi
-    .replace(/\b\w/g, (c) => c.toUpperCase()) // kapital tiap kata
-    .replace(/\s+/g, ""); // gabung semua → PascalCase
-};
+export function attachPrefetch(el: HTMLElement | null, preload: () => void) {
+  if (!el) return;
+  let done = false;
 
-/**
- * ✅ Normalisasi nama menjadi path route (kebab-case)
- */
+  const run = () => {
+    if (done) return;
+    done = true;
+    preload();
+  };
+
+  // 1) On hover
+  el.addEventListener("pointerenter", run, { once: true });
+
+  // 2) On visible (IntersectionObserver)
+  const io = new IntersectionObserver((entries) => {
+    if (entries && entries[0] && entries[0].isIntersecting) {
+      run();
+      io.disconnect();
+    }
+  });
+  io.observe(el);
+
+  // 3) On idle
+  if ("requestIdleCallback" in window) {
+    requestIdleCallback(() => run());
+  } else {
+    setTimeout(run, 200);
+  }
+}
+`;
+
+/******************************
+ * Component Name Generator
+ ******************************/
+const toComponentName = (fileName: string): string =>
+  fileName
+    .replace(/\.[^/.]+$/, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .replace(/\s+/g, "");
+
+/******************************
+ * Route Path Normalizer
+ ******************************/
 function toRoutePath(name: string): string {
-  name = name.replace(/\.[^/.]+$/, ""); // hapus ekstensi
+  name = name.replace(/\.[^/.]+$/, "");
 
   if (name.toLowerCase() === "home") return "/";
   if (name.toLowerCase() === "login") return "/login";
   if (name.toLowerCase() === "notfound") return "/*";
 
-  // Hapus prefix/suffix umum
-  name = name.replace(/_page$/i, "").replace(/^form_/i, "");
+  if (name.startsWith("[") && name.endsWith("]"))
+    return `:${name.slice(1, -1)}`;
 
-  // ✅ Normalisasi ke kebab-case
+  name = name.replace(/_page$/i, "").replace(/^form_/i, "");
   return _.kebabCase(name);
 }
 
-// 🧭 Scan folder pages secara rekursif
+/******************************
+ * Scan Folder + Validation + Dynamic Duplicate Check
+ ******************************/
 function scan(dir: string): any[] {
   const items = readdirSync(dir);
   const routes: any[] = [];
+  const dynamicParams = new Set<string>();
 
   for (const item of items) {
     const full = join(dir, item);
     const stat = statSync(full);
 
     if (stat.isDirectory()) {
+      if (!/^[a-zA-Z0-9_-]+$/.test(item)) {
+        console.warn(`⚠️ Invalid folder name: ${item}`);
+      }
+
       routes.push({
         name: item,
         path: _.kebabCase(item),
         children: scan(full),
       });
     } else if (extname(item) === ".tsx") {
+      const base = basename(item, ".tsx");
+
+      if (!/^[a-zA-Z0-9_[\]-]+$/.test(base)) {
+        console.warn(`⚠️ Invalid file name: ${item}`);
+      }
+
+      if (base.startsWith("[") && base.endsWith("]")) {
+        const p = base.slice(1, -1);
+        if (dynamicParams.has(p)) {
+          console.error(`❌ Duplicate dynamic param "${p}" in ${dir}`);
+          process.exit(1);
+        }
+        dynamicParams.add(p);
+      }
+
       routes.push({
-        name: basename(item, ".tsx"),
+        name: base,
         filePath: relative(join(process.cwd(), "src"), full).replace(/\\/g, "/"),
       });
     }
@@ -67,163 +128,233 @@ function scan(dir: string): any[] {
   return routes;
 }
 
-// 🏗️ Generate <Route> JSX dari struktur folder
+/******************************
+ * Index Detection
+ ******************************/
+function findIndexFile(folderName: string, children: any[]) {
+  const lower = folderName.toLowerCase();
+
+  return (
+    children.find((r: any) => r.name.toLowerCase().endsWith("_home")) ||
+    children.find((r: any) => r.name.toLowerCase() === "index") ||
+    children.find((r: any) => r.name.toLowerCase() === `${lower}_page`)
+  );
+}
+
+/******************************
+ * Generate JSX <Route> (Lazy + Prefetch)
+ ******************************/
 function generateJSX(routes: any[], parentPath = ""): string {
   let jsx = "";
 
+
   for (const route of routes) {
     if (route.children) {
-      const layout = route.children.find((r: any) => r.name.endsWith("_layout"));
+      const layout = route.children.find((r: any) =>
+        r.name.endsWith("_layout")
+      );
 
       if (layout) {
-        const LayoutComponent = toComponentName(layout.name.replace("_layout", "Layout"));
-        const nested = route.children.filter((r: any) => r !== layout);
+        const LayoutComp = toComponentName(
+          layout.name.replace("_layout", "Layout")
+        );
+
+        const nested = route.children.filter((x: any) => x !== layout);
         const nestedRoutes = generateJSX(nested, `${parentPath}/${route.path}`);
 
-        const homeFile = route.children.find((r: any) =>
-          r.name.toLowerCase().endsWith("_home")
-        );
-        const indexRoute = homeFile
-          ? `<Route index element={<${toComponentName(homeFile.name)} />} />\n`
-          : "";
+        const indexFile = findIndexFile(route.name, route.children);
+
+        const indexRoute = indexFile
+          ? `<Route index element={<${toComponentName(
+              indexFile.name
+            )}.Component />} />`
+          : `<Route index element={<Navigate to="${(
+              parentPath +
+              "/" +
+              route.path +
+              "/" +
+              (nested[0]?.name ?? "")
+            ).replace(/\/+/g, "/")}" replace />}/>`;
 
         jsx += `
-          <Route path="${parentPath}/${route.path}" element={<${LayoutComponent} />}>
-            ${indexRoute}
-            ${nestedRoutes}
-          </Route>
+        <Route path="${parentPath}/${route.path}" element={<${LayoutComp}.Component />}>
+          ${indexRoute}
+          ${nestedRoutes}
+        </Route>
         `;
       } else {
         jsx += generateJSX(route.children, `${parentPath}/${route.path}`);
       }
     } else {
-      const Component = toComponentName(route.name);
+      const Comp = toComponentName(route.name);
       const routePath = toRoutePath(route.name);
 
       const fullPath = routePath.startsWith("/")
         ? routePath
         : `${parentPath}/${routePath}`.replace(/\/+/g, "/");
 
-      jsx += `<Route path="${fullPath}" element={<${Component} />} />\n`;
+      jsx += `
+      <Route 
+        path="${fullPath}"
+        element={
+          <React.Suspense fallback={<SkeletonLoading />}>
+            <${Comp}.Component />
+          </React.Suspense>
+        }
+      />
+      `;
     }
   }
+
   return jsx;
 }
 
-// 🧾 Generate import otomatis
+/******************************
+ * Lazy Import + Prefetch Injection
+ ******************************/
 function generateImports(routes: any[]): string {
-  const imports = new Set<string>();
+  const list: string[] = [];
 
-  function collect(rs: any[]) {
+  function walk(rs: any[]) {
     for (const r of rs) {
-      if (r.children) collect(r.children);
+      if (r.children) walk(r.children);
       else {
-        const Comp = toComponentName(r.name);
-        imports.add(`import ${Comp} from "./${r.filePath.replace(/\.tsx$/, "")}";`);
+        const C = toComponentName(r.name);
+        const file = r.filePath.replace(/\.tsx$/, "");
+
+        list.push(`
+          const ${C} = {
+            Component: React.lazy(() => import("./${file}")),
+            preload: () => import("./${file}")
+          };
+        `);
       }
     }
   }
-  collect(routes);
-  return Array.from(imports).join("\n");
+  walk(routes);
+  return list.join("\n");
 }
 
+/******************************
+ * Generate AppRoutes.tsx
+ ******************************/
 function generateRoutes() {
   const allRoutes = scan(PAGES_DIR);
   const imports = generateImports(allRoutes);
-  const jsxRoutes = generateJSX(allRoutes);
+  const jsx = generateJSX(allRoutes);
 
-  const finalCode = `
-// ⚡ Auto-generated by generateRoutes.ts — DO NOT EDIT MANUALLY
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+  let loadingSkeleton = `
+  const SkeletonLoading = () => {
+    return (
+      <div style={{ padding: "20px" }}>
+        {Array.from({ length: 5 }, (_, i) => (
+          <Skeleton key={i} height={70} radius="md" animate={true} mb="sm" />
+        ))}
+      </div>
+    );
+  };
+  
+  `
+
+  const final = `
+// ⚡ AUTO-GENERATED — DO NOT EDIT
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Skeleton } from "@mantine/core";
+
+${loadingSkeleton}
+${PREFETCH_HELPER}
 ${imports}
 
 export default function AppRoutes() {
-	return (
-		<BrowserRouter>
-			<Routes>
-				${jsxRoutes}
-			</Routes>
-		</BrowserRouter>
-	);
+  return (
+    <BrowserRouter>
+      <Routes>
+        ${jsx}
+      </Routes>
+    </BrowserRouter>
+  );
 }
 `;
 
-  writeFileSync(OUTPUT_FILE, finalCode);
+  writeFileSync(OUTPUT_FILE, final);
   console.log(`✅ Routes generated → ${OUTPUT_FILE}`);
+
   Bun.spawnSync(["bunx", "prettier", "--write", "src/**/*.tsx"]);
 }
 
-// --- Extract untuk clientRoutes.ts ---
-const SRC_DIR = path.resolve(process.cwd(), "src");
-const APP_ROUTES_FILE = path.join(SRC_DIR, "AppRoutes.tsx");
+/******************************
+ * Extract flat client routes
+ ******************************/
+const SRC_DIR = path.resolve("src");
+const APP_ROUTES_FILE = join(SRC_DIR, "AppRoutes.tsx");
 
 interface RouteNode {
   path: string;
   children: RouteNode[];
 }
 
-function getAttributePath(attrs: (t.JSXAttribute | t.JSXSpreadAttribute)[]) {
-  const pathAttr = attrs.find(
-    (attr) => t.isJSXAttribute(attr) && t.isJSXIdentifier(attr.name, { name: "path" })
-  ) as t.JSXAttribute | undefined;
+function getAttributePath(attrs: any[]) {
+  const attr = attrs.find(
+    (a) => t.isJSXAttribute(a) && a.name.name === "path"
+  ) as any;
 
-  if (pathAttr && t.isStringLiteral(pathAttr.value)) return pathAttr.value.value;
-  return "";
+  return attr?.value?.value ?? "";
 }
 
 function extractRouteNodes(node: t.JSXElement): RouteNode | null {
-  const opening = node.openingElement;
-  if (!t.isJSXIdentifier(opening.name) || opening.name.name !== "Route") return null;
+  const op = node.openingElement;
+  if (!t.isJSXIdentifier(op.name) || op.name.name !== "Route") return null;
 
-  const currentPath = getAttributePath(opening.attributes);
+  const cur = getAttributePath(op.attributes);
   const children: RouteNode[] = [];
 
-  for (const child of node.children) {
-    if (t.isJSXElement(child)) {
-      const childNode = extractRouteNodes(child);
-      if (childNode) children.push(childNode);
+  for (const c of node.children) {
+    if (t.isJSXElement(c)) {
+      const n = extractRouteNodes(c);
+      if (n) children.push(n);
     }
   }
-  return { path: currentPath, children };
+  return { path: cur, children };
 }
 
-function flattenRoutes(node: RouteNode, parentPath = ""): Record<string, string> {
-  const record: Record<string, string> = {};
-  let fullPath = node.path;
+function flattenRoutes(node: RouteNode, parent = ""): Record<string, string> {
+  const r: Record<string, string> = {};
+  let full = node.path;
 
-  if (fullPath) {
-    if (!fullPath.startsWith("/")) {
-      if (parentPath) {
-        if (fullPath === "/") fullPath = parentPath;
-        else fullPath = `${parentPath.replace(/\/$/, "")}/${fullPath}`;
-      }
-      if (!fullPath.startsWith("/")) fullPath = `/${fullPath}`;
-    }
-    fullPath = fullPath.replace(/\/+/g, "/");
-    record[fullPath] = fullPath;
+  if (full) {
+    if (!full.startsWith("/"))
+      full =
+        parent && full !== "/"
+          ? `${parent.replace(/\/$/, "")}/${full}`
+          : "/" + full;
+    full = full.replace(/\/+/g, "/");
+    r[full] = full;
   }
 
-  for (const child of node.children) {
-    Object.assign(record, flattenRoutes(child, fullPath || parentPath));
-  }
-  return record;
+  for (const c of node.children)
+    Object.assign(r, flattenRoutes(c, full || parent));
+
+  return r;
 }
 
-function extractRoutes(code: string): Record<string, string> {
+function extractRoutes(code: string) {
   const ast = parser.parse(code, {
     sourceType: "module",
-    plugins: ["typescript", "jsx"],
+    plugins: ["jsx", "typescript"],
   });
 
   const routes: Record<string, string> = {};
+
   traverse(ast, {
-    JSXElement(path) {
-      const opening = path.node.openingElement;
-      if (t.isJSXIdentifier(opening.name) && opening.name.name === "Routes") {
-        for (const child of path.node.children) {
-          if (t.isJSXElement(child)) {
-            const node = extractRouteNodes(child);
-            if (node) Object.assign(routes, flattenRoutes(node));
+    JSXElement(p) {
+      const op = p.node.openingElement;
+
+      if (t.isJSXIdentifier(op.name) && op.name.name === "Routes") {
+        for (const c of p.node.children) {
+          if (t.isJSXElement(c)) {
+            const root = extractRouteNodes(c);
+            if (root) Object.assign(routes, flattenRoutes(root));
           }
         }
       }
@@ -233,28 +364,53 @@ function extractRoutes(code: string): Record<string, string> {
   return routes;
 }
 
-export default function route() {
-  generateRoutes();
+/******************************
+ * Type-Safe Route Builder
+ ******************************/
+function generateTypeSafe(routes: Record<string, string>) {
+  const keys = Object.keys(routes).filter((x) => !x.includes("*"));
+  const union = keys.map((x) => `"${x}"`).join(" | ");
 
-  if (!fs.existsSync(APP_ROUTES_FILE)) {
-    console.error("❌ AppRoutes.tsx not found in src/");
-    process.exit(1);
+  const code = `
+export type AppRoute = ${union};
+
+export function route(path: AppRoute, params?: Record<string,string|number>) {
+  if (!params) return path;
+  let final = path;
+  for (const k of Object.keys(params)) {
+    final = final.replace(":" + k, params[k] + "") as AppRoute;
   }
+  return final;
+}
+`;
+
+  fs.writeFileSync(join(SRC_DIR, "routeTypes.ts"), code);
+  console.log("📄 routeTypes.ts generated.");
+}
+
+/******************************
+ * MAIN
+ ******************************/
+export default function run() {
+  generateRoutes();
 
   const code = fs.readFileSync(APP_ROUTES_FILE, "utf-8");
   const routes = extractRoutes(code);
 
-  console.log("✅ Generated Routes:");
-  console.log(routes);
+  const out = join(SRC_DIR, "clientRoutes.ts");
 
-  const outPath = path.join(SRC_DIR, "clientRoutes.ts");
   fs.writeFileSync(
-    outPath,
-    `// AUTO-GENERATED FILE\nconst clientRoutes = ${JSON.stringify(routes, null, 2)} as const;\n\nexport default clientRoutes;`
+    out,
+    `// AUTO-GENERATED\nconst clientRoutes = ${JSON.stringify(
+      routes,
+      null,
+      2
+    )} as const;\nexport default clientRoutes;`
   );
 
-  console.log(`📄 clientRoutes.ts saved → ${outPath}`);
+  console.log(`📄 clientRoutes.ts saved → ${out}`);
+
+  generateTypeSafe(routes);
 }
 
-route()
-
+run();

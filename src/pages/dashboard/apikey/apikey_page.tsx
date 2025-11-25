@@ -39,7 +39,7 @@ function CreateApiKey() {
     try {
       setLoading(true);
 
-      if (!name || !description ) {
+      if (!name || !description) {
         showNotification({
           title: "Error",
           message: "All fields are required",
@@ -48,11 +48,12 @@ function CreateApiKey() {
         return;
       }
 
-
       const res = await apiFetch.api.apikey.create.post({
         name,
         description,
-        expiredAt: expiredAt ? new Date(expiredAt).toISOString() : new Date().toISOString(),
+        expiredAt: expiredAt
+          ? new Date(expiredAt).toISOString()
+          : new Date().toISOString(),
       });
 
       if (res.status === 200) {

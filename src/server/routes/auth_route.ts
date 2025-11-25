@@ -4,7 +4,6 @@ import Elysia, { t, type Cookie, type HTTPHeaders, type StatusMap } from 'elysia
 import { type ElysiaCookie } from 'elysia/cookies'
 
 import { prisma } from '@/server/lib/prisma'
-import type { User } from 'generated/prisma'
 
 const secret = process.env.JWT_SECRET
 if (!secret) {

@@ -1,4 +1,4 @@
-// AUTO-GENERATED FILE
+// AUTO-GENERATED
 const clientRoutes = {
   "/login": "/login",
   "/": "/",
@@ -7,5 +7,4 @@ const clientRoutes = {
   "/dashboard/dashboard": "/dashboard/dashboard",
   "/*": "/*"
 } as const;
-
 export default clientRoutes;

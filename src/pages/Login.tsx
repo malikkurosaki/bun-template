@@ -9,13 +9,16 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import apiFetch from "../lib/apiFetch";
+import clientRoutes from "@/clientRoutes";
+import { Navigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -40,6 +43,22 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        // backend otomatis baca cookie JWT dari request
+        const res = await apiFetch.api.user.find.get();
+        setIsAuthenticated(res.status === 200);
+      } catch {
+        setIsAuthenticated(false);
+      }
+    }
+    checkSession();
+  }, []);
+
+  if (isAuthenticated === null) return null;
+  if (isAuthenticated) return <Navigate to={clientRoutes["/dashboard"]} replace />;
 
   return (
     <Container size={420} py={80}>

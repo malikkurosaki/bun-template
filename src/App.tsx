@@ -7,7 +7,7 @@ import AppRoutes from "./AppRoutes";
 
 export function App() {
   return (
-    <MantineProvider>
+    <MantineProvider defaultColorScheme="dark">
       <Notifications />
       <ModalsProvider>
         <AppRoutes />
