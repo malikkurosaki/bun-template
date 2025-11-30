@@ -9,6 +9,8 @@ import { LandingPage } from "./Landing";
 import { renderToReadableStream } from "react-dom/server";
 import { cors } from "@elysiajs/cors";
 import packageJson from "./../package.json";
+import Configs from "./server/routes/configs_route";
+import { prisma } from "./server/lib/prisma";
 const PORT = process.env.PORT || 3000;
 
 const Docs = new Elysia().use(
@@ -68,6 +70,7 @@ const ApiUser = new Elysia({
 const Api = new Elysia({
   prefix: "/api",
 })
+  .use(Configs)
   .use(apiAuth)
   .use(ApiKeyRoute)
   .use(ApiUser);
@@ -77,6 +80,15 @@ const app = new Elysia()
   .use(Api)
   .use(Docs)
   .use(Auth)
+  .get("/get-allow-register", async () => {
+        const configs = await prisma.configs.findUnique({ where: { id: "1" } })
+        return { allowRegister: configs?.allowRegister }
+    }, {
+        detail: {
+            description: "Get allow register",
+            summary: "get allow register",
+        },
+    })
   .get(
     "/assets/:name",
     (ctx) => {

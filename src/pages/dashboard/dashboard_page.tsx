@@ -8,7 +8,7 @@ import {
   Stack,
   Table,
   Text,
-  Title
+  Title,
 } from "@mantine/core";
 
 export default function Dashboard() {

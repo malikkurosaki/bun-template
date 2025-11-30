@@ -13,6 +13,8 @@ import {
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import apiFetch from "../lib/apiFetch";
+import useSWR from "swr";
+import { useNavigate } from "react-router-dom";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -20,6 +22,10 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const navigate = useNavigate();
+
+  const { data, error, isLoading } = useSWR("/", apiFetch["get-allow-register"].get);
+  const allowRegister = data?.data?.allowRegister ?? false;
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -57,9 +63,21 @@ export default function Register() {
     checkSession();
   }, []);
 
+  if (isLoading) return <Text>Loading...</Text>;
+  if (error) return <Text>Error: {error.message}</Text>;
+
   if (isAuthenticated === null) return null;
   if (isAuthenticated)
     return <Navigate to={clientRoutes["/dashboard"]} replace />;
+
+  if (!allowRegister) return <Container size={"md"} w={"100%"}>
+    <Group justify="center">
+      <Stack>
+        <Text>Allow register is disabled</Text>
+        <Button onClick={() => navigate(clientRoutes["/login"])}>Back to login</Button>
+      </Stack>
+    </Group>
+  </Container>;
 
   return (
     <Container size={420} py={80}>

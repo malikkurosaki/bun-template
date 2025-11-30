@@ -4,6 +4,8 @@ const clientRoutes = {
   "/": "/",
   "/register": "/register",
   "/dashboard": "/dashboard",
+  "/dashboard/config": "/dashboard/config",
+  "/dashboard/config/config": "/dashboard/config/config",
   "/dashboard/apikey/apikey": "/dashboard/apikey/apikey",
   "/dashboard/dashboard": "/dashboard/dashboard",
   "/*": "/*"

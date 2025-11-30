@@ -29,3 +29,8 @@ model ApiKey {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
+
+model Configs {
+  id          String    @id @default("1")
+  allowRegister Boolean   @default(false)
+}

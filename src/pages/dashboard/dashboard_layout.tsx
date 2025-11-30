@@ -22,6 +22,8 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconDashboard,
+  IconKey,
+  IconSettings,
 } from "@tabler/icons-react";
 import type { User } from "generated/prisma";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -43,13 +45,12 @@ function Logout() {
         color="red"
         size="xs"
         onClick={async () => {
-
           modals.openConfirmModal({
             title: "Confirm Logout",
             children: "Are you sure you want to logout?",
             labels: { confirm: "Logout", cancel: "Cancel" },
             confirmProps: { color: "red" },
-            onCancel: () => { },
+            onCancel: () => {},
             onConfirm: async () => {
               await apiFetch.auth.logout.delete();
               localStorage.removeItem("token");
@@ -205,10 +206,18 @@ function NavigationDashboard() {
 
       <NavLink
         active={isActive("/dashboard/apikey/apikey")}
-        leftSection={<IconDashboard size={18} />}
+        leftSection={<IconKey size={18} />}
         label="API Keys"
         description="Manage your API credentials"
         onClick={() => navigate(clientRoutes["/dashboard/apikey/apikey"])}
+      />
+
+      <NavLink
+        active={isActive("/dashboard/config/config")}
+        leftSection={<IconSettings size={18} />}
+        label="Config"
+        description="Manage your app config"
+        onClick={() => navigate(clientRoutes["/dashboard/config/config"])}
       />
     </Stack>
   );

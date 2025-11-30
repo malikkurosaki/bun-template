@@ -64,6 +64,16 @@ const Register = {
   preload: () => import("./pages/Register"),
 };
 
+const ConfigLayout = {
+  Component: React.lazy(() => import("./pages/dashboard/config/config_layout")),
+  preload: () => import("./pages/dashboard/config/config_layout"),
+};
+
+const ConfigPage = {
+  Component: React.lazy(() => import("./pages/dashboard/config/config_page")),
+  preload: () => import("./pages/dashboard/config/config_page"),
+};
+
 const ApikeyPage = {
   Component: React.lazy(() => import("./pages/dashboard/apikey/apikey_page")),
   preload: () => import("./pages/dashboard/apikey/apikey_page"),
@@ -117,6 +127,19 @@ export default function AppRoutes() {
 
         <Route path="/dashboard" element={<DashboardLayout.Component />}>
           <Route index element={<DashboardPage.Component />} />
+
+          <Route path="/dashboard/config" element={<ConfigLayout.Component />}>
+            <Route index element={<ConfigPage.Component />} />
+
+            <Route
+              path="/dashboard/config/config"
+              element={
+                <React.Suspense fallback={<SkeletonLoading />}>
+                  <ConfigPage.Component />
+                </React.Suspense>
+              }
+            />
+          </Route>
 
           <Route
             path="/dashboard/apikey/apikey"

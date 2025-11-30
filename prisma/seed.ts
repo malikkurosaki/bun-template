@@ -8,6 +8,10 @@ const user = [
     }
 ];
 
+const configs = {
+    allowRegister: false
+}
+
 ; (async () => {
     for (const u of user) {
         await prisma.user.upsert({
@@ -19,7 +23,13 @@ const user = [
         console.log(`✅ User ${u.email} seeded successfully`)
     }
 
+    await prisma.configs.upsert({
+        where: { id: "1" },
+        create: configs,
+        update: configs,
+    })
 
+    console.log(`✅ Configs seeded successfully`)
 })().catch((e) => {
     console.error(e)
     process.exit(1)
